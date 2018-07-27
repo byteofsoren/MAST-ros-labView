@@ -70,7 +70,6 @@ def main():
         update_rate.sleep()
         #rospy.rostime.wallsleep(0.1)
         counter += 1
-        
     #pass
 
 if __name__ == "__main__":
