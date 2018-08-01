@@ -51,6 +51,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   to_rio.msg
+  stop.msg
   vehicle_status.msg
   vehicle_settings.msg
 )

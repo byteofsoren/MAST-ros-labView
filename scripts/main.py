@@ -59,6 +59,7 @@ def read_from_rio(data):
 def main():
     '''This is the main loop
     '''
+    rospy.Subscriber(subscibe_from_rio_to_tx2_name,from_rio, read_from_rio )
     counter = 0.0
     while not rospy.is_shutdown():
         # Update message to Roborio
@@ -73,5 +74,4 @@ def main():
     #pass
 
 if __name__ == "__main__":
-    rospy.Subscriber(subscibe_from_rio_to_tx2_name,from_rio, read_from_rio )
     main()
