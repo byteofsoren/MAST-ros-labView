@@ -43,6 +43,12 @@ update_rate = rospy.Rate(10) #100hz
 status = 0       # This is a vehicle_status struct
 front_dist = 0   # This is a front_sensors struct
 
+class vehicle_info:
+    """A global class to store all informatino from and to the vehicle"""
+    def __init__(self):
+        pass
+
+
 def send_status():
     """TODO: for send status to a eventual controll gui.
     :returns: none
@@ -113,6 +119,7 @@ def main():
         counter += 1
     #pass
 
+global_car = vehicle_info()
 if __name__ == "__main__":
     rospy.loginfo("Start sub from tx2")
     rospy.Subscriber(subscibe_from_rio_to_tx2_name,from_rio, read_from_rio )
