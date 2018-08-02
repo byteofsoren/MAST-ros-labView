@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -----------------------------------------
 # This is part of MAST.
-# Created and mantained by Ulrik Åkesson.
+# Created and mantained by Ulrik Akesson.
 # -----------------------------------------
 #     ROS - LabVIEW communication
 # This script is used to recive and forward the emergency stop signal
@@ -37,7 +37,14 @@ def readEmergencyStop(data):
        Updates the global variable emStop for the publisher
 
     """
-    emStop = data.stop
+    global emStop
+
+    if emStop == 0:
+        emStop = data.stop
+        rospy.logwarn("-- Running --")
+    else:
+        rospy.logwarn("--STOP--")
+    rospy.loginfo("readEmergencyStop was {emstop}".format(emstop=(emStop)))
 
 def writeEmergencyStop():
     """TODO: Docstring for writeEmergencyStop(.
@@ -51,9 +58,14 @@ def writeEmergencyStop():
 
 def main():
     rospy.Subscriber(stopExternal, stop, readEmergencyStop )
+    counter = 0
     while not rospy.is_shutdown():
         writeEmergencyStop()
+        if counter % 100 == 0:
+            print("writeEmergencyStop is caled")
         updateRate.sleep()
+        counter += 1
 
 if __name__ == "__main__":
+    print("Starting emstop module")
     main()
