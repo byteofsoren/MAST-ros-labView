@@ -62,7 +62,7 @@ def main():
     while not rospy.is_shutdown():
         writeEmergencyStop()
         if counter % 100 == 0:
-            print("writeEmergencyStop is caled")
+            rospy.loginfo("writeEmergencyStop is caled")
         updateRate.sleep()
         counter += 1
 
