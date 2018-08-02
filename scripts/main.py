@@ -16,6 +16,7 @@
 #       float64 set_stearing
 # -----------------------------------------
 import rospy
+from vechle import vechle
 from std_msgs.msg  import String
 from ros_labview_dummy.msg import from_rio
 from ros_labview.msg import to_rio
@@ -35,15 +36,14 @@ update_rate = rospy.Rate(100) #100hz
 speed_is=0
 steering_is=0
 
-def send_to_rio(steering=0,speed=0):
+def send_to_rio():
     """TODO: for send_to_rio.
     :returns: none
 
     """
-    message_to_rio.set_speed = speed
-    message_to_rio.set_steering = steering
-    message_to_rio.time_frame = rospy.get_time()
-    print("Sending speed={}, steering={}".format(speed,steering))
+    message_to_rio.set_speed = car.set_speed
+    message_to_rio.set_steering = car.set_steering
+    message_to_rio.time_frame = rospy.Time.now()
     pub_handle.publish(message_to_rio)
 
 def read_from_rio(data):
@@ -51,9 +51,15 @@ def read_from_rio(data):
     :returns: [steering,speed]
 
     """
-    speed_is=data.speed_is
-    steering_is=data.steering_is
-    print('data.speed_is = {}, data.steering_is = {}' .format(data.speed_is, data.steering_is))
+    global car
+    car.speed_is = data.speed_is
+    car.steering_is = data.steering_is
+    car.recived_time_from_rio = data.delta
+    car.error_message += " " + str(data.error_message)
+    car.error += data.error
+    #speed_is=data.speed_is
+    #steering_is=data.steering_is
+    #print('data.speed_is = {}, data.steering_is = {}' .format(data.speed_is, data.steering_is))
     #pass
 
 def main():
@@ -73,5 +79,6 @@ def main():
         counter += 1
     #pass
 
+car = vechle()
 if __name__ == "__main__":
     main()
