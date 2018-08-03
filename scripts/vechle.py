@@ -11,8 +11,8 @@ class vechle(object):
     def __init__(self):
         """TODO: to be defined1. """
         # From rio
-        self.speed_is = list()
-        self.steering_is = list()
+        self.speed_is = [0 for i in range(4)]
+        self.steering_is = [0 for i in range(4)]
         self.sent_time_to_rio = rospy.Time()
         self.delta_tx2_rio = -1
         # to rio
@@ -26,8 +26,8 @@ class vechle(object):
         self.run = 0
         self.max_speed = 3.0
         # to gui
-        self.distance_front = list()
-        self.distance_back = list()
+        self.distance_front = [-1 for i in range(4)]
+        self.distance_back = [-1 for i in range(3)]
         # error info
         self.error = 0
         self.error_message = str()

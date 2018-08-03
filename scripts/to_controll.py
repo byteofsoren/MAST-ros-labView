@@ -37,7 +37,7 @@ front_sensors = sensor_values()
 # Create a publisher node so the rio can subsribe on the destinations.
 #pub_handle = rospy.Publisher(publish_from_tx2_to_rio_name, data_class=to_rio, queue_size=1)
 pub_handle = rospy.Publisher(publish_status_name, data_class=vehicle_status, queue_size=1)
-rospy.init_node(subscibe_from_rio_to_tx2_name, anonymous=True)
+rospy.init_node('tx2_to_controll.py', anonymous=True)
 update_rate = rospy.Rate(10) #100hz
 # Subscribe to the data from rio
 status = 0       # This is a vehicle_status struct

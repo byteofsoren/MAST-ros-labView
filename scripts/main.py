@@ -39,7 +39,7 @@ tx2_to_rio_pub_handle = rospy.Publisher(publish_from_tx2_to_rio_name, data_class
 tx2_to_ext_pub_handle = rospy.Publisher(publish_from_tx2_to_rio_name, data_class=vehicle_status, queue_size=1)
 
 # Create the nodes in the car.
-rospy.init_node(subscibe_from_rio_to_tx2_name, anonymous=True)
+rospy.init_node('tx2_mani.py', anonymous=True)
 update_rate = rospy.Rate(100) #100hz
 # Subscribe to the data from rio
 
@@ -49,14 +49,15 @@ def send_to_rio():
 
     """
     global car
-    message_to_rio.set_speed = car.set_speed
+    message_to_rio.set_speed = 1000
     message_to_rio.set_steering = car.set_steering
     message_to_rio.time_frame = car.get_time()
     message_to_rio.enable = car.enable
     if not car.enable == 0:
         rospy.logwarn("--Sent enable to roborio --")
     tx2_to_rio_pub_handle.publish(message_to_rio)
-    rospy.loginfo("Sent to rio")
+    if car.updates_from_rio % 30 == 0:
+        rospy.loginfo("Sent to rio")
 
 def read_from_rio(data):
     """Reding from rio is done heare
@@ -64,12 +65,13 @@ def read_from_rio(data):
 
     """
     global car
+    if car.updates_from_rio % 30 == 0:
+        rospy.loginfo("Read from rio")
     car.speed_is = data.speed_is
     car.steering_is = data.steering_is
     car.set_delta_tx2_rio(data.delta)
     car.error_message += " " + str(data.error_message)
     car.error += data.error
-    rospy.loginfo("Read from rio")
     #speed_is=data.speed_is
     #steering_is=data.steering_is
     #print('data.speed_is = {}, data.steering_is = {}' .format(data.speed_is, data.steering_is))
@@ -83,15 +85,16 @@ def send_status():
     """
     global car
     message_status.speed_is = car.speed_is
-    message_status.steering_is = car.steering_is
+    #message_status.steering_is = car.steering_is
     message_status.distance_front = car.distance_back
     message_status.distance_back = car.distance_back
-    message_status.error_id = car.error
+    message_status.error_id = 0
     message_status.error_message = car.error_message
     message_status.time_frame = rospy.Time.now()
     message_status.delta_tx2_rio = car.get_time()
     tx2_to_ext_pub_handle.publish(message_status)
-    rospy.loginfo("Sent status to topic {topic}".format(topic=publish_vehicle_status))
+    if car.updates_from_rio % 100 == 0:
+        rospy.loginfo("Sent status to topic {topic}".format(topic=publish_vehicle_status))
 
 def read_settings(settings):
     """Reads settings from guis
@@ -115,6 +118,8 @@ def main():
     counter = 0.0
     global car
     while not rospy.is_shutdown():
+        if counter % 30 == 0:
+            rospy.loginfo("-- Spin in mani --")
         # Update message to Roborio
         # ---- Write control code here ----
         # Write to RoboRIO

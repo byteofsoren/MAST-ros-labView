@@ -5,4 +5,4 @@ float64[3] distance_back
 int8 error_id
 string  error_message
 time time_frame
-uint64 delta_tx2_rio
+time delta_tx2_rio
