@@ -36,7 +36,7 @@ message_status = vehicle_status()
 message_settings = vehicle_settings()
 # Create a publisher node so the rio can subsribe on the destinations.
 tx2_to_rio_pub_handle = rospy.Publisher(publish_from_tx2_to_rio_name, data_class=to_rio, queue_size=1)
-tx2_to_ext_pub_handle = rospy.Publisher(publish_from_tx2_to_rio_name, data_class=vehicle_status, queue_size=1)
+#tx2_to_ext_pub_handle = rospy.Publisher(publish_vehicle_status, data_class=vehicle_status, queue_size=1)
 
 # Create the nodes in the car.
 rospy.init_node('tx2_mani.py', anonymous=True)
@@ -52,12 +52,15 @@ def send_to_rio():
     message_to_rio.set_speed = 1000
     message_to_rio.set_steering = car.set_steering
     message_to_rio.time_frame = car.get_time()
-    message_to_rio.enable = car.enable
+
     if not car.enable == 0:
-        rospy.logwarn("--Sent enable to roborio --")
-    tx2_to_rio_pub_handle.publish(message_to_rio)
+        rospy.loginfo("Sent to rio enable = {enable}".format(enable=message_to_rio.enable))
+        message_to_rio.enable = 1
+    else:
+        message_to_rio.enable = 0
     if car.updates_from_rio % 30 == 0:
-        rospy.loginfo("Sent to rio")
+        rospy.loginfo("Sent to rio enable = {enable}".format(enable=message_to_rio.enable))
+    tx2_to_rio_pub_handle.publish(message_to_rio)
 
 def read_from_rio(data):
     """Reding from rio is done heare
@@ -123,10 +126,10 @@ def main():
         # Update message to Roborio
         # ---- Write control code here ----
         # Write to RoboRIO
-        car.set_speed = counter
+        car.set_speed = 200
         car.set_steering = 12
         send_to_rio()
-        send_status()
+        #send_status()
         # Read from RoboRIO
         #print('roborio speed is ={}, stearing is = {}'.format(speed_is, steering_is))
         update_rate.sleep()
