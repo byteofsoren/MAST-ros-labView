@@ -61,8 +61,8 @@ def send_status():
         rospy.loginfo("Status ok -> sending")
         message_status.speed_is = status.speed_is
         message_status.steering_is = [status.steering_is, status.steering_is, 0 , 0]
-        message_status.distance_frant = [front_dist.left_sensor, front_dist.middle_sensor, front_dist.right_sensor]
-        message_status.time_frame = rospy.get_time()
+        message_status.distance_front = [front_dist.left_sensor, front_dist.middle_sensor, front_dist.right_sensor]
+        message_status.time_frame = rospy.Time.now()
         sensor_error =  np.sum(front_dist.error)
         sensor_error_message = ""
         if not sensor_error == 0:
