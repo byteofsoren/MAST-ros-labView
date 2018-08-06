@@ -1,0 +1,8 @@
+<launch>
+    <node pkg="ros_labview" type="emstop" name="emstop" output="screen"/>
+    <node pkg="ros_labview" type="main" name="main" output="screen"/>
+    <node pkg="ros_labview" type="to_control" name="to_control" output="screen"/>
+    <!--
+    <include file="$(find nameofproject)/launch/nameoflaunchfile.launch"/>
+    -->
+</launch>
