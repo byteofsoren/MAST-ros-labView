@@ -20,20 +20,21 @@ from vechle import vechle
 from std_msgs.msg  import String
 from ros_labview_dummy.msg import from_rio
 from ros_labview.msg import to_rio
-from ros_labview.msg import vehicle_status
 from ros_labview.msg import vehicle_settings
+from cannylive.msg import errorDistances
 
 # topics:
 publish_from_tx2_to_rio_name = 'control_to_rio'
 subscibe_from_rio_to_tx2_name = 'read_rio'
-publish_vehicle_status = 'vehicle_status'
 subscribe_vehicle_settings = 'vehicle_settings'
+subscribe_canny_name = 'cannylive'
 
 # Globals.
 message_to_rio = to_rio()
 message_from_rio = from_rio()
-message_status = vehicle_status()
 message_settings = vehicle_settings()
+message_canny = errorDistances()
+
 # Create a publisher node so the rio can subsribe on the destinations.
 tx2_to_rio_pub_handle = rospy.Publisher(publish_from_tx2_to_rio_name, data_class=to_rio, queue_size=1)
 #tx2_to_ext_pub_handle = rospy.Publisher(publish_vehicle_status, data_class=vehicle_status, queue_size=1)
@@ -44,27 +45,28 @@ update_rate = rospy.Rate(100) #100hz
 # Subscribe to the data from rio
 
 def send_to_rio():
-    """TODO: for send_to_rio.
+    """This function sends the car information to the RoboRIO
     :returns: none
 
     """
     global car
-    message_to_rio.set_speed = 1000
+    message_to_rio.set_speed = car.set_speed
     message_to_rio.set_steering = car.set_steering
     message_to_rio.time_frame = car.get_time()
-
+    # Is the car in enable mode?
     if not car.enable == 0:
-        rospy.loginfo("Sent to rio enable = {enable}".format(enable=message_to_rio.enable))
         message_to_rio.enable = 1
+        pass
     else:
         message_to_rio.enable = 0
-    if car.updates_from_rio % 30 == 0:
-        rospy.loginfo("Sent to rio enable = {enable}".format(enable=message_to_rio.enable))
+    if car.updates_from_rio % 60 == 0:
+        rospy.loginfo("Sent to RoboRIO enable = {enable}".format(enable=message_to_rio.enable))
+    # Publish the message to roboRIO
     tx2_to_rio_pub_handle.publish(message_to_rio)
 
 def read_from_rio(data):
-    """Reding from rio is done heare
-    :returns: [steering,speed]
+    """Reeding from RoboRIO is done here
+    :returns: none
 
     """
     global car
@@ -75,40 +77,28 @@ def read_from_rio(data):
     car.set_delta_tx2_rio(data.delta)
     car.error_message += " " + str(data.error_message)
     car.error += data.error
-    #speed_is=data.speed_is
-    #steering_is=data.steering_is
-    #print('data.speed_is = {}, data.steering_is = {}' .format(data.speed_is, data.steering_is))
-    #pass
 
-
-def send_status():
-    """This publish the status of the car on the topic vehicle_status
-    :returns: None
-
+def read_canny(canny):
+    """ Reads error from canny_live module
     """
-    global car
-    message_status.speed_is = car.speed_is
-    #message_status.steering_is = car.steering_is
-    message_status.distance_front = car.distance_back
-    message_status.distance_back = car.distance_back
-    message_status.error_id = 0
-    message_status.error_message = car.error_message
-    message_status.time_frame = rospy.Time.now()
-    message_status.delta_tx2_rio = car.get_time()
-    tx2_to_ext_pub_handle.publish(message_status)
-    if car.updates_from_rio % 100 == 0:
-        rospy.loginfo("Sent status to topic {topic}".format(topic=publish_vehicle_status))
+    # This don't work yet
+    car.canny_error = canny.errorDist
+    rospy.loginfo("canny error = {}".format(car.canny_error))
+
+
 
 def read_settings(settings):
-    """Reads settings from guis
-    :returns: TODO
+    """Reads settings from GUI
+    :returns: none
 
     """
+    # The global car class is used to store the data.
     global car
 
     car.enable = settings.enable
+    car.run = settings.run
     if not car.enable == 0:
-        rospy.logwarn("-------Car is enabeld---------")
+        rospy.logwarn("-------Car is enabled---------")
     elif car.updates_from_rio % 20 == 0:
         rospy.loginfo("read_settings from GUI")
 
@@ -116,24 +106,23 @@ def read_settings(settings):
 def main():
     '''This is the main loop
     '''
+    # Start subscribing to RoboRIO and Vechile settings.
     rospy.Subscriber(subscibe_from_rio_to_tx2_name,from_rio, read_from_rio )
     rospy.Subscriber(subscribe_vehicle_settings,vehicle_settings, read_settings)
+    # Subscribe to canny live error data <Disabled right now>
+    rospy.Subscriber(subscribe_canny_name,errorDistances, read_canny)
     counter = 0.0
     global car
     while not rospy.is_shutdown():
-        if counter % 30 == 0:
-            rospy.loginfo("-- Spin in mani --")
-        # Update message to Roborio
-        # ---- Write control code here ----
-        # Write to RoboRIO
-        car.set_speed = 200
-        car.set_steering = 12
+        if counter % 60 == 0:
+            rospy.loginfo("-- Spin in main counter={c}--".format(c=counter))
+        # Send data to RoboRIO
+        if counter % 300  == 0:
+            rospy.loginfo("controller run")
+            #car.controller()
         send_to_rio()
-        #send_status()
-        # Read from RoboRIO
-        #print('roborio speed is ={}, stearing is = {}'.format(speed_is, steering_is))
+        # sleep
         update_rate.sleep()
-        #rospy.rostime.wallsleep(0.1)
         counter += 1
     #pass
 

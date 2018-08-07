@@ -15,6 +15,7 @@
 # -----------------------------------------
 import numpy as np
 import rospy
+from vechle import vechle
 from std_msgs.msg  import String
 from ros_labview_dummy.msg import from_rio
 #from ros_labview.msg import to_rio
@@ -42,12 +43,7 @@ update_rate = rospy.Rate(10) #100hz
 # Subscribe to the data from rio
 status = 0       # This is a vehicle_status struct
 front_dist = 0   # This is a front_sensors struct
-
-class vehicle_info:
-    """A global class to store all informatino from and to the vehicle"""
-    def __init__(self):
-        pass
-
+counter = 0
 
 def send_status():
     """TODO: for send status to a eventual controll gui.
@@ -56,42 +52,40 @@ def send_status():
     """
     # The first line make shures that at least one iteration of the data have bean done
     # and there for there exist data on the nodes.
-    rospy.loginfo("Send_status")
-    if (type(status) != type(0)) and (type(front_dist) != type(0)):
-        rospy.loginfo("Status ok -> sending")
-        message_status.speed_is = status.speed_is
-        message_status.steering_is = [status.steering_is, status.steering_is, 0 , 0]
-        message_status.distance_front = [front_dist.left_sensor, front_dist.middle_sensor, front_dist.right_sensor]
-        message_status.time_frame = rospy.Time.now()
-        sensor_error =  np.sum(front_dist.error)
-        sensor_error_message = ""
-        if not sensor_error == 0:
-            if not front_dist.error[0] == 0:
-                sensor_error_message += "Left Sensor error "
-                rospy.logwarn("Left Sensor error")
-            if not front_dist.error[1] == 0:
-                sensor_error_message += "Middle Sensor error "
-                rospy.logwarn("Middle Sensor error")
-            if not front_dist.error[2] == 0:
-                sensor_error_message += "Right Sensor error "
-                rospy.logwarn("Right Sensor error")
-            pass
+    global counter
+    if counter % 30 == 0 :
+        rospy.loginfo("Send_status")
+    global car
+    #message_status.speed_is = [1,2,3]
+    message_status.speed_is = car.speed_is
 
-        message_status.error_id = status.error_id + sensor_error
-        message_status.error_message += sensor_error_message
+    message_status.steering_is = car.steering_is
+    message_status.distance_front = car.distance_front
+    message_status.distance_back =[0,0,0]
+    message_status.error_id = int(car.error)
+    message_status.error_message = car.error_message
+    message_status.time_frame = rospy.Time.now()
+    #rospy.loginfo("delta_tx2_rio={delta}, type(set_delta_tx2_rio)={t}".format(delta=car.delta_tx2_rio, t=type(car.delta_tx2_rio)))
+    # I know how to solve the bug old.nsecs() - new.nsecs()
+    ##message_status.delta_tx2_rio = car.delta_tx2_rio
+    pub_handle.publish(message_status)
 
-        pub_handle.publish(message_status)
-        rospy.loginfo("Sending speed={speed}, stearing={stearing} to gui".format(speed=status.speed_is, stearing=status.stearing_is))
 
-def read_from_rio(data):
+
+def read_from_rio(rio):
     """Reding from rio is done heare
     :returns: [steering,speed]
 
     """
-    status = data
-    speed_is=data.speed_is
-    steering_is=data.steering_is
-    print('data.speed_is = {}, data.steering_is = {}' .format(data.speed_is, data.steering_is))
+    global counter
+    global car
+    car.speed_is = rio.speed_is
+    car.steering_is = rio.steering_is
+    car.error = rio.error
+    car.error_message = rio.error_message
+    car.set_delta_tx2_rio(rio.delta)
+    if counter % 30 == 0 :
+        rospy.loginfo("read_from_rio speed_is={s}, steering_is={t}".format(s=car.speed_is, t=car.steering_is))
     #pass
 
 def read_sensors(sens):
@@ -99,27 +93,43 @@ def read_sensors(sens):
     :returns:nothing
 
     """
-    front_dist = sens
-    pass
+    global car
+    global counter
+    car.distance_front = [sens.left_sensor, sens.middle_sensor, sens.right_sensor]
+    car.error = np.sum(sens.error)
+    if counter % 30 == 0:
+        rospy.loginfo("Sensor values {left},{mid},{right}".format(left=sens.left_sensor, mid=sens.middle_sensor, right=sens.right_sensor))
+    if not car.error == 0:
+        pass
+        sensor_error_message = ""
+        if not sensor_error == 0:
+            if not sens.error[0] == 0:
+                sensor_error_message += "Left Sensor error "
+                rospy.logwarn("Left Sensor error")
+            if not sens.error[1] == 0:
+                sensor_error_message += "Middle Sensor error "
+                rospy.logwarn("Middle Sensor error")
+            if not sens.error[2] == 0:
+                sensor_error_message += "Right Sensor error "
+                rospy.logwarn("Right Sensor error")
+        car.error_message += sensor_error_message
 
 def main():
     '''This is the main loop
     '''
-    counter = 0.0
+    global counter
     while not rospy.is_shutdown():
         # Update message to Roborio
         # ---- Write control code here ----
-        # Write to RoboRIO
-        # send_to_rio(1.0,counter)
         send_status()
         # Read from RoboRIO
         #print('roborio speed is ={}, stearing is = {}'.format(speed_is, steering_is))
         update_rate.sleep()
         #rospy.rostime.wallsleep(0.1)
         counter += 1
-    #pass
+    #pas
 
-global_car = vehicle_info()
+car = vechle()
 if __name__ == "__main__":
     rospy.loginfo("Start sub from tx2")
     rospy.Subscriber(subscibe_from_rio_to_tx2_name,from_rio, read_from_rio )
