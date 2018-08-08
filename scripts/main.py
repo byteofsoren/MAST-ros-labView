@@ -21,6 +21,7 @@ from std_msgs.msg  import String
 from ros_labview_dummy.msg import from_rio
 from ros_labview.msg import to_rio
 from ros_labview.msg import vehicle_settings
+from ros_labview.msg import stop
 from cannylive.msg import errorDistances
 
 # topics:
@@ -28,15 +29,18 @@ publish_from_tx2_to_rio_name = 'control_to_rio'
 subscibe_from_rio_to_tx2_name = 'read_rio'
 subscribe_vehicle_settings = 'vehicle_settings'
 subscribe_canny_name = 'cannylive'
+publish_emstop_name = 'emstop'
 
 # Globals.
 message_to_rio = to_rio()
 message_from_rio = from_rio()
 message_settings = vehicle_settings()
 message_canny = errorDistances()
+message_stop = stop()
 
 # Create a publisher node so the rio can subsribe on the destinations.
 tx2_to_rio_pub_handle = rospy.Publisher(publish_from_tx2_to_rio_name, data_class=to_rio, queue_size=1)
+tx2_emstop_pub_handle = rospy.Publisher(publish_emstop_name, data_class=stop, queue_size=1)
 #tx2_to_ext_pub_handle = rospy.Publisher(publish_vehicle_status, data_class=vehicle_status, queue_size=1)
 
 # Create the nodes in the car.
@@ -97,10 +101,30 @@ def read_settings(settings):
 
     car.enable = settings.enable
     car.run = settings.run
+    car.gui_connection_requierd = settings.gui_connection_requierd
+    car.gui_got_time = settings.time_frame
     if not car.enable == 0:
         rospy.logwarn("-------Car is enabled---------")
     elif car.updates_from_rio % 20 == 0:
         rospy.loginfo("read_settings from GUI")
+
+
+def write_emstop_on_no_gui():
+    """Publish a em stop if GUI lost connection.
+
+    :returns: None
+
+    """
+    global car
+    convert = 1000000000
+    nowtime = car.gui_got_time.secs * convert + car.gui_got_time.nsecs
+    oldtime = car.gui_last_time.secs * convert + car.gui_last_time.nsecs
+    dif = nowtime - oldtime
+    car.gui_last_time = car.gui_got_time
+    if (dif<300) or ((convert/10)*7 < dif):
+        message_stop.stop = 1
+        tx2_emstop_pub_handle.publish(message_stop)
+
 
 
 def main():
@@ -121,6 +145,7 @@ def main():
             rospy.loginfo("controller run")
             #car.controller()
         send_to_rio()
+        write_emstop_on_no_gui()
         # sleep
         update_rate.sleep()
         counter += 1

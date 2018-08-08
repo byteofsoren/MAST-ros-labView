@@ -26,6 +26,8 @@ class vechle(object):
         self.enable = 0
         self.run = 0
         self.max_speed
+        self.gui_last_time = rospy.Time.now()
+        self.gui_got_time = rospy.Time.now()
         # to gui
         self.distance_front = [-1 for i in range(3)]
         self.distance_back = [-1 for i in range(3)]
