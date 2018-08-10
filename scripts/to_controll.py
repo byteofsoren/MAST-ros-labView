@@ -96,13 +96,15 @@ def read_sensors(sens):
     global car
     global counter
     car.distance_front = [sens.left_sensor, sens.middle_sensor, sens.right_sensor]
-    car.error = np.sum(sens.error)
+    t = np.sum(sens.error)
+    car.error = t
+    car.distance_error = t
     if counter % 30 == 0:
         rospy.loginfo("Sensor values {left},{mid},{right}".format(left=sens.left_sensor, mid=sens.middle_sensor, right=sens.right_sensor))
+    sensor_error_message = ""
     if not car.error == 0:
         pass
-        sensor_error_message = ""
-        if not sensor_error == 0:
+        if not car.distance_error == 0:
             if not sens.error[0] == 0:
                 sensor_error_message += "Left Sensor error "
                 rospy.logwarn("Left Sensor error")

@@ -15,6 +15,8 @@
 # -----------------------------------------
 
 import rospy
+import rosnode
+from time import sleep
 from ros_labview.msg import stop
 
 # Settings:
@@ -41,30 +43,36 @@ def readEmergencyStop(data):
 
     if emStop == 0:
         emStop = data.stop
-        rospy.logwarn("-- Running --")
+        rospy.logwarn("-- readEmergencyStop --")
     else:
-        rospy.logwarn("--STOP--")
+        rospy.logerr("--readEmergencyStop -- STOP--")
     rospy.loginfo("readEmergencyStop was {emstop}".format(emstop=(emStop)))
 
 def writeEmergencyStop():
     """TODO: Docstring for writeEmergencyStop(.
     :returns: TODO
-
     """
-    stopMsg.stop = emStop
     if emStop != 0:
+        stopMsg.stop = 1
         rospy.logwarn('Stop have been triggered {}'.format(emStop))
-    pubHandle.publish(stopMsg)
+        pubHandle.publish(stopMsg)
+
 
 def main():
     rospy.Subscriber(stopExternal, stop, readEmergencyStop )
     counter = 0
-    while not rospy.is_shutdown():
+    rospy.loginfo("[mast emStop init]")
+    while (not rospy.is_shutdown()) and (emStop == 0):
+        if not emStop == 0:
+            rospy.logerr("main emstop isn't zero")
         writeEmergencyStop()
-        if counter % 100 == 0:
-            rospy.loginfo("writeEmergencyStop is caled")
         updateRate.sleep()
         counter += 1
+    rospy.logwarn("[Shut down in 5 sec]")
+    writeEmergencyStop()
+    sleep(5)
+    nodes = rosnode.get_node_names()
+    rosnode.kill_nodes(nodes)
 
 if __name__ == "__main__":
     print("Starting emstop module")

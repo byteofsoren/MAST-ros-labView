@@ -1,5 +1,5 @@
 int8 enable
 int8 run
-int8 gui_connection_requierd=1
-float64 max_speed=3.0
+int8 gui_connection_requierd
+float64 max_speed
 time time_frame
