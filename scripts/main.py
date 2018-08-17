@@ -82,6 +82,8 @@ def read_from_rio(data):
     car.set_delta_tx2_rio(data.delta)
     car.error_message += " " + str(data.error_message)
     car.error += data.error
+    delta_tx2 = (rospy.Time.now() - car.sent_time_to_rio).nsecs
+    rospy.loginfo("delta_tx2 ".format(t=delta_tx2))
 
 def read_canny(canny):
     """ Reads error from canny_live module

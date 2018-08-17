@@ -62,6 +62,9 @@ def send_status():
     message_status.steering_is = car.steering_is
     message_status.distance_front = car.distance_front
     message_status.distance_back =[0,0,0]
+    if int(car.error) > 100:
+        car.error = 100
+        rospy.logwarn("#Error was bigger then 200")
     message_status.error_id = int(car.error)
     message_status.error_message = car.error_message
     message_status.time_frame = rospy.Time.now()
@@ -114,7 +117,7 @@ def read_sensors(sens):
             if not sens.error[2] == 0:
                 sensor_error_message += "Right Sensor error "
                 rospy.logwarn("Right Sensor error")
-        car.error_message += sensor_error_message
+        car.error_message = sensor_error_message
 
 def main():
     '''This is the main loop
