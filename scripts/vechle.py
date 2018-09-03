@@ -80,38 +80,38 @@ class vechle(object):
        # print("dt = {}, ds = {}, dn = {}".format(dt, ds, dn))
         self._lastTime = currTime
 
-        meanDistance = np.array(self.distance_front).mean()
-        print("meanDistance = {}".format(meanDistance))
-        if meanDistance > 600:
+       # meanDistance = np.array(self.distance_front).mean()
+       # print("meanDistance = {}".format(meanDistance))
+       # if meanDistance > 600:
 
-            self._integral += self.canny_error*dt
-            derivative = (self.canny_error-self._prevE)/dt
-            prevE = self.canny_error
+        self._integral += self.canny_error*dt
+        derivative = (self.canny_error-self._prevE)/dt
+        prevE = self.canny_error
 
-            # Steering PID
-            desiredSteeringAngle = (self._steeringP*self.canny_error +
-                                    self._steeringI*self._integral +
-                                    self._steeringD*derivative)
-            if desiredSteeringAngle > 20:
-                desiredSteeringAngle = 20
-            elif desiredSteeringAngle < -20:
-                desiredSteeringAngle = -20
+        # Steering PID
+        desiredSteeringAngle = (self._steeringP*self.canny_error +
+                                self._steeringI*self._integral +
+                                self._steeringD*derivative)
+        if desiredSteeringAngle > 20:
+            desiredSteeringAngle = 20
+        elif desiredSteeringAngle < -20:
+            desiredSteeringAngle = -20
 
-            # Speed PID
-            self._speedP = (self.max_speed-self.min_speed)/self._maxE
-            desiredSpeed = (self.max_speed - np.absolute(self._speedP*self.canny_error +
-                                                         self._speedI*self._integral +
-                                                         self._speedD*derivative))
-            if desiredSpeed < 0.5:
-                desiredSpeed = 0.5
+        # Speed PID
+        self._speedP = (self.max_speed-self.min_speed)/self._maxE
+        desiredSpeed = (self.max_speed - np.absolute(self._speedP*self.canny_error +
+                                                     self._speedI*self._integral +
+                                                     self._speedD*derivative))
+        if desiredSpeed < 0.5:
+            desiredSpeed = 0.5
 
 
-        else:
-            if self.distance_front[0] < self.distance_front[2]:
-                desiredSteeringAngle = -20
-            else:
-                desiredSteeringAngle = 20
-            desiredSpeed = -0.5
+        # else:
+        #     if self.distance_front[0] < self.distance_front[2]:
+        #         desiredSteeringAngle = -20
+        #     else:
+        #         desiredSteeringAngle = 20
+        #     desiredSpeed = -0.5
 
         self.set_speed = desiredSpeed
         self.set_steering = desiredSteeringAngle
